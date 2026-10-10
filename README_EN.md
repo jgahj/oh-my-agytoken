@@ -1,7 +1,7 @@
 # 📊 Oh My AGY Token (oh-my-agytoken)
 
 <p align="center">
-  <b>High-Performance Local Token Statistics, Real-Time Monitoring & Interactive Analytics Dashboard for Google Antigravity</b>
+  <b>High-Performance Local Token Statistics, Real-Time Monitoring & Enterprise Interactive Analytics Dashboard for Google Antigravity</b>
 </p>
 
 <p align="center">
@@ -23,31 +23,48 @@
 
 **Oh My AGY Token** (`oh-my-agytoken`) is a high-performance, lightweight, zero-dependency token analytics and live monitoring tool crafted for **Google Antigravity** (both Antigravity IDE & Antigravity CLI).
 
-It automatically discovers local conversation databases across Windows and WSL2 environments, decodes low-level Protobuf binary wire streams natively using pure Python, and extracts model tokens, Thinking Tokens (Chain-of-Thought), Prompt Caching hit rates, and request latencies. It also delivers a **sub-second real-time sync service**, **Sub2API official price calculation**, and an **interactive single-file HTML dashboard**.
+It automatically discovers local conversation databases across Windows and WSL2 environments, decodes low-level Protobuf binary wire streams natively using pure Python, and extracts model tokens, Thinking Tokens (Chain-of-Thought), Prompt Caching hit rates, and request latencies. It also delivers a **sub-second real-time sync service**, **Sub2API official price calculation**, and an **interactive enterprise-grade single-file HTML dashboard**.
 
 ---
 
-## 📸 Interactive Dashboard Preview
+## 📸 Real Interactive Dashboard Preview
 
-The dashboard uses a single-file self-contained architecture with complete offline rendering and persistent theme memory:
+The dashboard uses a single-file self-contained architecture with complete offline rendering, persistent theme memory, and enterprise SaaS design aesthetics (similar to Linear / Vercel design systems):
 
-### 1. ☀️ Warm Light Theme (Default)
-Ideal for daytime productivity with a soft, paper-like warm palette:
+### 1. ☀️ Modern Light Theme (Default)
+Clean white and soft-slate card design with crisp typography, ideal for daytime productivity:
 
-![Warm Light Theme](assets/dashboard_preview.png)
+![Modern Light Theme](assets/dashboard_preview.png)
 
 ### 2. 🌙 Geek Dark Theme (Optional)
-Deep Slate dark tones with vibrant tech accents and adaptive chart recoloring:
+Deep Slate dark tones with vibrant tech accents and adaptive high-contrast chart palettes:
 
 ![Geek Dark Theme](assets/dashboard_preview_dark.png)
 
-### ✨ Core Features
-- **⚡ Sub-Second Live Sync**: Built-in lightweight local HTTP server tracking SQLite DB and `-wal` write-ahead logs; automatically refreshes token statistics as you code and chat.
-- **🌐 Global Dimension Filtering**: One-click toggle between `All Tools`, `Antigravity IDE`, and `Antigravity CLI` with whole-page chart synchronization.
-- **💰 Official & Sub2API Cost Calculation**: Aligned with Google official pricing and Sub2API configs (Gemini 3.1 Pro, Gemini 3.8/3.7/3.6 Flash, Flash-Lite, Claude Opus 4.6), calculating actual cost, wholesale account cost, and Prompt Caching savings.
-- **📅 Golden-Ratio Contribution Heatmap**: Symmetrical 52-week GitHub-style heatmap alongside model donut charts with year switcher and tooltip hover info.
-- **📈 Panoramic Timeline Chart**: Full-width daily usage chart with preset date capsules, custom date ranges, multi-select model filters, and dynamic summary cards.
-- **🔍 Deep Metric Breakdown**: Detailed breakdown of Windows vs. WSL2 usage, cache hit rate, Chain-of-Thought (Thinking Tokens), and latency distribution.
+### ✨ Core Features & Architectural Layout
+- **⚡ Sub-Second Live Sync & Active WAL Tracking**:
+  - Top live indicator pill with breathing animation and dynamic sync timestamps.
+  - Senses SQLite database and `-wal` write-ahead log updates; automatically refreshes token statistics as you code and chat.
+- **📊 Top 4 KPI Metric Cards**:
+  - **Total Requests**: Quantifies model invocations in selected range.
+  - **Total Tokens (M Units)**: High-level total alongside three-way breakdown: `Input (Uncached)`, `Output (Generated)`, and `Cache Read`.
+  - **Total Expenditure**: Aligned with Sub2API pricing, comparing actual expenditure, catalog standard pricing, and upstream cost, plus Prompt Caching savings.
+  - **Average Latency & Cache Hit Rate**: Highlights mean response time and context cache hit rate (often 90%+).
+- **🎛️ Global Advanced Filter Bar**:
+  - **Date Range Popover**: 9 preset quick filters (`Today`, `Yesterday`, `Last 24h`, `Last 7d`, `Last 14d`, `Last 30d`, `This Month`, `Last Month`, `All Time`) plus custom date pickers.
+  - **Client Dimension Pills**: `All`, `Antigravity IDE`, `Antigravity CLI` with invocation count badges; triggers real-time full-page synchronized filtering.
+  - **Granularity Selector**: Toggle between `Hourly`, `Daily`, and `Monthly`.
+- **📈 2x2 Core Analytics Chart Grid**:
+  - **Model Distribution**: Donut chart + mini data table (toggle between `By Tokens` and `By Actual Cost`).
+  - **Client Group Distribution**: Donut chart comparing IDE vs CLI usage and cost.
+  - **Endpoint & Environment Distribution**: Donut chart comparing Windows Local vs WSL2 environments.
+  - **Token Usage Trend**: Dual Y-axis area & line chart tracking token types on left axis and cache hit rate on right axis.
+- **📑 Bottom 5 Multi-Functional Tabs**:
+  - **Tab 1: 📄 Usage Details**: Keyword search, multi-field dropdown filters, CSV export, and an 11-column high-precision invocation log (second-level timestamps, copyable UUIDs, client badges, latency color bars, token composition, cost/savings, and detailed inspect modal).
+  - **Tab 2: ⏱️ Hourly Analysis (Sub2)**: Hourly stacked bar charts (stacked by type or model) and 24-hour breakdown table.
+  - **Tab 3: 📅 Daily Trends**: Daily token consumption bar/line charts and daily expenditure/savings tables.
+  - **Tab 4: 🔥 Annual Contribution Heatmap (GitHub-style)**: 52-week 365-day SVG activity heatmap with hover tooltips displaying daily usage.
+  - **Tab 5: 💰 Official Pricing Sheet**: Full tier-rate comparison for Gemini 3.1 Pro, Gemini 3.8/3.7/3.6 Flash, Flash-Lite, and Claude Opus 4.6.
 - **📦 Zero External Dependencies**: 100% built on Python 3.8+ standard libraries—no `pip install` required.
 
 ---
@@ -123,7 +140,7 @@ Running the tool produces the following output files in the root folder:
 
 | File | Format | Purpose |
 | :--- | :---: | :--- |
-| **`Antigravity_Token_Dashboard.html`** | HTML | **Interactive Single-File Dashboard**. Fully self-contained, offline-compatible visualization dashboard. |
+| **`Antigravity_Token_Dashboard.html`** | HTML | **Interactive Enterprise-Grade Dashboard**. Fully self-contained, offline-compatible visualization dashboard. |
 | **`Antigravity_Token_Report.md`** | Markdown | **Structured Deep Analytics Report**. Detailed summary, top 20 conversations by consumption, and prompt breakdowns. |
 | **`token_records_detailed.csv`** | CSV | **Per-Request Detailed Record**. Granular log of every call (timestamps, model, uncached input, cached read, output, thinking tokens, latency). |
 | **`token_stats_summary.json`** | JSON | **Aggregated Statistical Data**. Structured multi-dimensional JSON metrics. |
@@ -200,8 +217,8 @@ oh-my-agytoken/
 ├── run_stats.bat                 # One-click Windows runner for live monitoring & UI
 ├── Antigravity_Token_Dashboard.html # High-performance interactive dashboard (single-file)
 ├── Antigravity_Token_Report.md   # Detailed Markdown analytics report
-├── assets/                       # Dashboard preview screenshots
-│   ├── dashboard_preview.png     # Warm light theme screenshot
+├── assets/                       # Dashboard preview screenshots (actual UI captures)
+│   ├── dashboard_preview.png     # Modern light theme screenshot
 │   └── dashboard_preview_dark.png # Geek dark theme screenshot
 ├── .gitignore                    # Excludes sensitive database caches and details
 ├── LICENSE                       # MIT License

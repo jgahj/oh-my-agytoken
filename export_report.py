@@ -893,9 +893,9 @@ def render_html_dashboard(
         rendered = re.sub(pattern_multi, replacement, template_content, count=1)
 
     # 动态适配当前实际服务端端口 (供 file:/// 本地协议访问时连接)
-    if server_port and server_port != 8765:
+    if server_port:
         rendered = re.sub(
-            r"'http://127\.0\.0\.1:8765'",
+            r"'http://127\.0\.0\.1:\d+'",
             f"'http://127.0.0.1:{server_port}'",
             rendered
         )

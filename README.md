@@ -1,7 +1,7 @@
 # 📊 Oh My AGY Token (oh-my-agytoken)
 
 <p align="center">
-  <b>Google Antigravity 本地 Token 统计、秒级实时监控与多维度可视化仪表盘</b>
+  <b>Google Antigravity 本地 Token 统计、秒级实时监控与企业级现代化交互仪表盘</b>
 </p>
 
 <p align="center">
@@ -21,33 +21,50 @@
 
 ## 📖 项目简介
 
-**Oh My AGY Token** (`oh-my-agytoken`) 是一款专为 **Google Antigravity**（Antigravity IDE 与 Antigravity CLI）打造的高性能、轻量级、零第三方依赖的 Token 统计、消费分析与实时监控工具。
+**Oh My AGY Token** (`oh-my-agytoken`) 是一款专为 **Google Antigravity**（Antigravity IDE 与 Antigravity CLI）打造的高性能、轻量级、零第三方依赖的 Token 统计、消费深度分析与实时监控系统。
 
-工具能够全自动穿透发现 Windows 与 WSL2 环境中的 Antigravity 本地会话库，基于纯 Python 原生解码底层 Protobuf 二进制流，毫秒级提取全量模型调用的 Token 用量、思维链（Thinking Tokens）、缓存命中率（Prompt Caching）与耗时指标，并提供**秒级实时热同步服务**、**Sub2API 官方计费折算**以及**单文件可视化交互式仪表盘**。
+工具能够全自动穿透发现 Windows 与 WSL2 环境中的 Antigravity 本地会话库，基于纯 Python 原生解码底层 Protobuf 二进制流，毫秒级提取全量模型调用的 Token 用量、思维链思考（Thinking Tokens）、缓存命中率（Prompt Caching）与耗时指标，并提供**秒级实时热同步服务**、**Sub2API / Google 官方价卡计费折算**以及**单文件现代化企业级可视化仪表盘**。
 
 ---
 
-## 📸 交互式仪表盘预览
+## 📸 真实交互式仪表盘预览
 
-仪表盘采用单文件自包含（Single-file Self-contained）架构，完全支持离线打开与随处分享，内置双主题持久化记忆与全图维度联动：
+仪表盘采用单文件自包含（Single-file Self-contained）架构，完全支持离线打开与随处分享，具备企业级 SaaS 质感（类 Linear / Vercel 设计风格），内置双主题持久化记忆与全图维度联动：
 
-### 1. ☀️ 暖阳米黄风格（默认）
-适合日间办公与长时间数据查阅，舒缓温润不刺眼：
+### 1. ☀️ 现代浅色风格（Light Theme - 默认）
+纯白与浅灰微质感卡片设计，层级分明，专业利落，适合日间办公：
 
-![暖阳米黄仪表盘预览](assets/dashboard_preview.png)
+![现代浅色风格仪表盘预览](assets/dashboard_preview.png)
 
-### 2. 🌙 极客暗黑风格（可选）
-深邃 Slate 暗蓝灰搭配科技高光，图表色彩自适应换色：
+### 2. 🌙 沉浸暗黑风格（Dark Theme - 可选）
+深邃 Slate 科技深蓝黑背景，高对比度荧光图表自适应配色，夜间护眼沉浸：
 
-![极客暗黑仪表盘预览](assets/dashboard_preview_dark.png)
+![沉浸暗黑风格仪表盘预览](assets/dashboard_preview_dark.png)
 
-### ✨ 核心特性一览
-- **⚡ 秒级实时监听与热同步**：内置轻量本地实时服务，感知 SQLite 主库与 WAL 缓冲文件变动，编写代码与对话时看板数据自动无感刷新。
-- **🌐 顶层全局维度联动**：一键在 `全部工具 (All)`、`Antigravity IDE` 与 `Antigravity CLI` 之间切换，全图联动。
-- **💰 Sub2API 与官方价卡计费折算**：内置 Gemini 3.1 Pro、Gemini 3.8/3.7/3.6 Flash、Flash-Lite、Claude Opus 4.6 等全系模型价卡，精确计算实际消费、账号成本与缓存节省金额。
-- **📅 黄金分割年度贡献热力图**：左侧各模型消耗环形图与右侧 GitHub 风格年度 52 周热力图紧凑并排，支持年份切换与鼠标悬浮详情。
-- **📈 全景每日消耗走势图**：横向全宽展示每日消耗，集成日期快捷胶囊、起止日选择器、模型多选以及**实时动态求和统计卡片**。
-- **🔍 深度指标多维透视**：精确展示 Windows vs WSL2 环境分布、上下文缓存节省率、思维链思考 Token（Thinking Tokens）与响应耗时分布。
+### ✨ 核心功能与模块架构
+- **⚡ 秒级实时监听与无感热同步**：
+  - 顶部集成呼吸状态指示灯与动态同步时间戳，感知 SQLite 主库及 `-wal` 预写日志变动。
+  - 编写代码与对话时，后台自动增量抓取最新调用，前端数据无感自动热刷新。
+- **📊 顶部 4 大核心 KPI 指标卡**：
+  - **总请求数**：直观展示所选时间范围内的调用总次数。
+  - **总 Token (M 百万级)**：宏观展示总量，并精细拆解 `输入 (Input)`、`输出 (Output)` 与 `缓存读取 (Cache Read)`。
+  - **总消费金额**：严格对齐 Sub2API 费率标准，同时核算实际消费、官方标准目录价与上游成本，并清晰提示 Prompt Caching 为您节约的美金。
+  - **平均耗时 & 缓存命中率**：展示单次模型响应平均延迟与全局 Prompt 缓存命中率（高达 90%+）。
+- **🎛️ 全局高级过滤与维度联动栏**：
+  - **时间范围选择器**：支持 9 档快捷预设（`今天`、`昨天`、`近24小时`、`近 7 天`、`近 14 天`、`近 30 天`、`本月`、`上月`、`全部时间`）及任意起止日自定义筛选。
+  - **客户端切换 Pills**：`全部 ALL`、`Antigravity IDE`、`Antigravity CLI`，带调用量徽章，全站图表与明细数据实时联动。
+  - **统计粒度切换**：支持 `按小时`、`按天`、`按月` 聚合。
+- **📈 2x2 核心图表矩阵**：
+  - **模型分布**：环形占比图 + 迷你数据表（支持【按 Token】与【按实际消费】双模式切换）。
+  - **分组使用分布**：环形图对比 IDE 与 CLI 调用量及费用。
+  - **端点与环境分布**：环形图对比 Windows 本地与 WSL2 运行环境。
+  - **Token 使用趋势图**：双 Y 轴面积与折线混合图，左轴展示各类型 Token 用量走势，右轴叠加展示缓存命中率走势。
+- **📑 底部 5 大复合标签页面板**：
+  - **Tab 1: 📄 用量明细 (Usage Details)**：支持关键词模糊搜索、模型/客户端/环境多重筛选、CSV 导出，呈现 11 列高精度调用日志（精确到秒的时间戳、会话 ID 一键复制、客户端徽章、模型映射、耗时彩色指示条、Token 三合一构成、实际/标准费用、缓存节省金额及单条请求详情弹窗）。
+  - **Tab 2: ⏱️ 小时统计 (Sub2)**：小时级堆叠柱状图（支持按类型/按模型堆叠切换）与 24 个小时用量明细。
+  - **Tab 3: 📅 每日走势 (Daily Trend)**：每日消耗折线/柱状图与每日消费/节省汇总明细表。
+  - **Tab 4: 🔥 年度热力图 (GitHub Heatmap)**：GitHub 风格 52 周 365 天用量活跃矩阵，鼠标悬浮 Tooltip 呈现每日确切用量。
+  - **Tab 5: 💰 官方价格表 (Pricing Sheet)**：全系模型输入/输出/缓存单价与典型场景对照。
 - **📦 零第三方依赖**：100% 基于 Python 3.8+ 标准库实现，无需 `pip install` 任何第三方包，开箱即用。
 
 ---
@@ -123,7 +140,7 @@ python token_analyzer.py
 
 | 文件名称 | 格式 | 说明与用途 |
 | :--- | :---: | :--- |
-| **`Antigravity_Token_Dashboard.html`** | HTML | **现代化交互式单文件仪表盘**。内嵌完整可视化交互逻辑，可脱机离线浏览或发送给他人分享。 |
+| **`Antigravity_Token_Dashboard.html`** | HTML | **现代化企业级交互式单文件仪表盘**。内嵌完整可视化交互逻辑，可脱机离线浏览或发送给他人分享。 |
 | **`Antigravity_Token_Report.md`** | Markdown | **结构化深度统计报告**。包含用量总览、会话消耗排行 Top 20、模型分布及 Prompt 构成分析。 |
 | **`token_records_detailed.csv`** | CSV | **单次请求明细表**。记录每条 LLM 调用的精确时间戳、模型名称、未缓存输入、缓存读取、输出与耗时，适合 Excel / Pandas 二次加工。 |
 | **`token_stats_summary.json`** | JSON | **全量统计聚合数据**。按客户端类型、模型、日期汇总的结构化数据字典。 |
@@ -215,9 +232,9 @@ oh-my-agytoken/
 ├── run_stats.bat                 # Windows 一键启动实时监控与仪表盘脚本
 ├── Antigravity_Token_Dashboard.html # 生成的高性能可视化交互式仪表盘 (单文件自包含)
 ├── Antigravity_Token_Report.md   # 生成的结构化分析报告 (Markdown 格式)
-├── assets/                       # 仪表盘双主题高清预览截图
-│   ├── dashboard_preview.png     # 暖阳米黄主题预览截图
-│   └── dashboard_preview_dark.png # 极客暗黑主题预览截图
+├── assets/                       # 仪表盘真实高分辨率双主题预览截图
+│   ├── dashboard_preview.png     # 现代浅色风格真实截图
+│   └── dashboard_preview_dark.png # 沉浸暗黑风格真实截图
 ├── .gitignore                    # Git 忽略配置 (自动排除敏感缓存与明细数据)
 ├── LICENSE                       # MIT 开源许可证
 ├── README.md                     # 中文使用说明与架构文档
