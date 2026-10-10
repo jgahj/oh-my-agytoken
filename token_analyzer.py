@@ -6,9 +6,19 @@ import json
 import os
 import sqlite3
 import subprocess
+import sys
 import time
 from typing import Any, Dict, List, Optional, Union
-from proto_decoder import extract_gen_metadata
+
+# 确保在 Windows 控制台下的 UTF-8 打印兼容
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
+from proto_decoder import extract_gen_metadata, extract_step_timestamp, parse_proto
+
+CACHE_VERSION = 3
 
 
 _WSL_DISTROS_CACHE: Optional[List[str]] = None
@@ -196,23 +206,19 @@ def parse_single_db(db_path: str, env: str = "windows") -> List[Dict[str, Any]]:
     db_filename = os.path.basename(db_path)
     conv_id = os.path.splitext(db_filename)[0]
 
-    # 构建适用于 SQLite 的 URI 路径
+    # 构建适用于 SQLite 的 URI 路径 (采用只读模式，不加 immutable=1 以便实时读取 WAL 中的最新 Token)
     norm_path = os.path.normpath(db_path).replace("\\", "/")
     if norm_path.startswith("//"):
         # Windows UNC 网络路径，如 //wsl.localhost/Ubuntu/...
-        uri = f"file:////{norm_path.lstrip('/')}?mode=ro&immutable=1"
+        uri = f"file:////{norm_path.lstrip('/')}?mode=ro"
     else:
         # 本地盘符路径，如 file:C:/Users/...
-        uri = f"file:{norm_path}?mode=ro&immutable=1"
+        uri = f"file:{norm_path}?mode=ro"
 
-    # 识别客户端工具类型 (IDE vs CLI vs 其他)
+    # 识别客户端工具类型 (Antigravity IDE vs Antigravity CLI)
     norm_lower = norm_path.lower()
     if "antigravity-cli" in norm_lower:
         client_type = "Antigravity CLI"
-    elif "antigravity-ide" in norm_lower:
-        client_type = "Antigravity IDE"
-    elif "antigravity" in norm_lower:
-        client_type = "Antigravity"
     else:
         client_type = "Antigravity IDE"
 
@@ -239,6 +245,38 @@ def parse_single_db(db_path: str, env: str = "windows") -> List[Dict[str, Any]]:
         except Exception:
             pass
 
+        # 尝试从 steps 表提取每步的时间戳 (秒级精确度) 并精确建立与 gen_metadata 的映射关系
+        step_timestamps = {}
+        gen_timestamps = {}
+        try:
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='steps';")
+            if cursor.fetchone():
+                cursor.execute("SELECT idx, metadata FROM steps WHERE metadata IS NOT NULL;")
+                for s_idx, s_meta in cursor.fetchall():
+                    if s_meta:
+                        ts_val = extract_step_timestamp(s_meta)
+                        if ts_val:
+                            step_timestamps[s_idx] = ts_val
+                            # 从 steps 的 protobuf 中提取其对应的 gen_metadata 索引 (tag 20 -> subtag 3)
+                            try:
+                                fields = parse_proto(s_meta)
+                                for fn, _, fv in fields:
+                                    if fn == 20 and isinstance(fv, dict) and "sub" in fv:
+                                        for sfn, _, sfv in fv["sub"]:
+                                            if sfn == 3 and isinstance(sfv, int):
+                                                gen_timestamps[sfv] = ts_val
+                            except Exception:
+                                pass
+        except Exception:
+            pass
+
+        # 文件修改时间作为最终兜底
+        fallback_file_time = None
+        try:
+            fallback_file_time = int(os.path.getmtime(db_path))
+        except Exception:
+            pass
+
         # 读取 gen_metadata 表
         cursor.execute("SELECT idx, data, size FROM gen_metadata ORDER BY idx ASC;")
         rows = cursor.fetchall()
@@ -257,6 +295,16 @@ def parse_single_db(db_path: str, env: str = "windows") -> List[Dict[str, Any]]:
                 if meta_info:
                     item['trajectory_type'] = meta_info.get('trajectory_type')
                     item['source'] = meta_info.get('source')
+                
+                # 注入精准时间戳：优先通过 steps.metadata 映射与 last_step_index 关联，彻底消除时间错位
+                real_ts = gen_timestamps.get(idx)
+                if not real_ts:
+                    last_step = item.get('last_step_index')
+                    if last_step and last_step in step_timestamps:
+                        real_ts = step_timestamps[last_step]
+                if not real_ts:
+                    real_ts = item.get('timestamp') or step_timestamps.get(idx) or fallback_file_time
+                item['timestamp'] = real_ts
                 records.append(item)
 
         conn.close()
@@ -268,16 +316,16 @@ def parse_single_db(db_path: str, env: str = "windows") -> List[Dict[str, Any]]:
 
 
 def load_token_cache(cache_file: str) -> Dict[str, Any]:
-    """加载本地增量缓存，若不存在或损坏则返回空缓存结构"""
+    """加载本地增量缓存，若不存在、版本不匹配或损坏则返回空缓存结构"""
     if os.path.exists(cache_file):
         try:
             with open(cache_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                if isinstance(data, dict) and data.get("version") == 1 and "files" in data:
+                if isinstance(data, dict) and data.get("version") == CACHE_VERSION and "files" in data:
                     return data
         except Exception:
             pass
-    return {"version": 1, "last_updated": 0, "files": {}}
+    return {"version": CACHE_VERSION, "last_updated": 0, "files": {}}
 
 
 def save_token_cache(cache_file: str, cache_data: Dict[str, Any]) -> None:
@@ -286,15 +334,17 @@ def save_token_cache(cache_file: str, cache_data: Dict[str, Any]) -> None:
     try:
         with open(tmp_file, "w", encoding="utf-8") as f:
             json.dump(cache_data, f, ensure_ascii=False)
-        if os.path.exists(cache_file):
-            os.remove(cache_file)
-        os.rename(tmp_file, cache_file)
+        os.replace(tmp_file, cache_file)
     except Exception:
         try:
-            with open(cache_file, "w", encoding="utf-8") as f:
-                json.dump(cache_data, f, ensure_ascii=False)
+            time.sleep(0.05)
+            os.replace(tmp_file, cache_file)
         except Exception:
-            pass
+            try:
+                if os.path.exists(tmp_file):
+                    os.remove(tmp_file)
+            except Exception:
+                pass
 
 
 def collect_all_data(
@@ -322,7 +372,7 @@ def collect_all_data(
     summary_parts = [f"{env}: {count} 个" for env, count in env_counts.items()]
     total_dbs = len(db_items)
 
-    cache_data = load_token_cache(cache_file) if use_cache else {"version": 1, "files": {}}
+    cache_data = load_token_cache(cache_file) if use_cache else {"version": CACHE_VERSION, "files": {}}
     cached_files = cache_data.get("files", {})
 
     all_records = []
@@ -348,13 +398,27 @@ def collect_all_data(
         except Exception:
             pass
 
-        # 检查是否命中增量缓存
+        # 同时感知 WAL 缓冲文件的增量变化 (支持正在交互的活跃会话秒级捕获)
+        wal_path = f"{db_path}-wal"
+        wal_mtime = 0.0
+        wal_size = 0
+        if os.path.exists(wal_path):
+            try:
+                st_w = os.stat(wal_path)
+                wal_mtime = st_w.st_mtime
+                wal_size = st_w.st_size
+            except Exception:
+                pass
+
+        # 检查是否命中增量缓存 (同时校验主库与 WAL 缓冲文件)
         cached_entry = cached_files.get(norm_key)
         if (
             use_cache
             and cached_entry
             and abs(cached_entry.get("mtime", 0) - mtime) < 1e-4
             and cached_entry.get("size") == size
+            and abs(cached_entry.get("wal_mtime", 0) - wal_mtime) < 1e-4
+            and cached_entry.get("wal_size", 0) == wal_size
             and "records" in cached_entry
         ):
             db_records = cached_entry["records"]
@@ -368,11 +432,17 @@ def collect_all_data(
                 cached_files[norm_key] = {
                     "mtime": mtime,
                     "size": size,
+                    "wal_mtime": wal_mtime,
+                    "wal_size": wal_size,
                     "env": env,
                     "records": db_records
                 }
 
         for r in db_records:
+            # 兼容旧缓存标签，自动规范化为 Antigravity IDE
+            if r.get("client_type") == "Antigravity":
+                r["client_type"] = "Antigravity IDE"
+                cache_modified = True
             dedup_key = (r.get("conv_id"), r.get("step_idx"))
             if dedup_key not in seen_steps:
                 seen_steps.add(dedup_key)

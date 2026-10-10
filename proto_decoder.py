@@ -180,6 +180,16 @@ def extract_gen_metadata(data: bytes) -> Optional[Dict[str, Any]]:
                         elif lat_fn == 2 and lat_wt == 'varint':
                             ns = lat_v
                     record['latency_sec'] = round(s + ns / 1e9, 3)
+                elif sfn == 20 and swt == 'len_delimited' and sv.get('sub'):
+                    k = None
+                    v_str = None
+                    for k_fn, k_wt, k_v in sv['sub']:
+                        if k_fn == 1 and k_v.get('str'):
+                            k = k_v['str']
+                        elif k_fn == 2 and k_v.get('str'):
+                            v_str = k_v['str']
+                    if k == 'last_step_index' and v_str and v_str.isdigit():
+                        record['last_step_index'] = int(v_str)
 
     # 规范化 response_tokens
     if record['response_tokens'] == 0 and record['output_tokens'] > 0:
@@ -204,3 +214,48 @@ def extract_gen_metadata(data: bytes) -> Optional[Dict[str, Any]]:
         record['model_name'] = id_map.get(record['model_id'], record['model_id'])
 
     return record
+
+
+def extract_step_timestamp(data: bytes) -> Optional[int]:
+    """
+    从 steps 表中的 metadata protobuf 字节流快速提取执行时间戳 (Unix 秒级时间戳)
+    """
+    if not data:
+        return None
+    try:
+        # 极速解码路径：通常 metadata 字节首字段为 field 1 (0x0a: tag=1, wire_type=2)
+        if data[0] == 0x0A:
+            length, pos = decode_varint(data, 1)
+            end = pos + length
+            while pos < end:
+                tag, pos = decode_varint(data, pos)
+                fn = tag >> 3
+                wt = tag & 0x07
+                if fn == 1 and wt == 0:
+                    val, pos = decode_varint(data, pos)
+                    return val
+                elif wt == 0:
+                    _, pos = decode_varint(data, pos)
+                elif wt == 5:
+                    pos += 4
+                elif wt == 1:
+                    pos += 8
+                elif wt == 2:
+                    l, pos = decode_varint(data, pos)
+                    pos += l
+                else:
+                    break
+    except Exception:
+        pass
+
+    # 备用方案：通过 parse_proto 通用解析器提取
+    try:
+        fields = parse_proto(data)
+        for fn, wt, v in fields:
+            if fn == 1 and wt == 'len_delimited' and v.get('sub'):
+                for sfn, swt, sv in v['sub']:
+                    if sfn == 1 and swt == 'varint':
+                        return sv
+    except Exception:
+        pass
+    return None

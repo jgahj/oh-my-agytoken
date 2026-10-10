@@ -43,6 +43,8 @@ venv.bak/
 *.db-shm
 *.db-wal
 .mcp.json
+*（优化稿）.html
+pelican_bicycle.html
 
 # 编辑器与 IDE
 .vscode/
