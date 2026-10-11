@@ -111,6 +111,55 @@ def extract_prompt_breakdown(sub_f10: List[Tuple[int, str, Any]]) -> Dict[str, A
                             breakdown['chat_messages_tokens'] = sec_tokens
     return breakdown
 
+# Antigravity IDE 前端选择的逻辑模型枚举到用户可见模型名称的映射 (逆向自 language_server.exe 映射表)
+MODEL_ENUM_MAP = {
+    # Gemini 3.1 Pro 系列
+    'MODEL_PLACEHOLDER_M16': 'Gemini 3.1 Pro',
+    'MODEL_PLACEHOLDER_M36': 'Gemini 3.1 Pro (Low)',
+    'MODEL_PLACEHOLDER_M37': 'Gemini 3.1 Pro (High)',
+    # Gemini 3.8 Flash 系列
+    'MODEL_PLACEHOLDER_M124': 'Gemini 3.8 Flash',
+    'MODEL_PLACEHOLDER_M78': 'Gemini 3.8 Flash',
+    'MODEL_PLACEHOLDER_M298': 'Gemini 3.8 Flash',
+    'MODEL_PLACEHOLDER_M299': 'Gemini 3.8 Flash',
+    'MODEL_PLACEHOLDER_M300': 'Gemini 3.8 Flash',
+    'MODEL_PLACEHOLDER_M301': 'Gemini 3.8 Flash',
+    'MODEL_PLACEHOLDER_M318': 'Gemini 3.8 Flash (High)',
+    'MODEL_PLACEHOLDER_M319': 'Gemini 3.8 Flash (Low)',
+    'MODEL_PLACEHOLDER_M320': 'Gemini 3.8 Flash',
+    'MODEL_PLACEHOLDER_M322': 'Gemini 3.8 Flash (Tiered)',
+    # Claude Opus 系列
+    'MODEL_PLACEHOLDER_M26': 'Claude Opus 4.6 (Thinking)',
+    'MODEL_PLACEHOLDER_M35': 'Claude Opus 4.6 (Thinking)',
+    # Gemini 3.7 Flash 系列
+    'MODEL_PLACEHOLDER_M47': 'Gemini 3.7 Flash',
+    'MODEL_PLACEHOLDER_M269': 'Gemini 3.7 Flash',
+    'MODEL_PLACEHOLDER_M271': 'Gemini 3.7 Flash',
+    # Gemini 3.6 Flash 系列
+    'MODEL_PLACEHOLDER_M71': 'Gemini 3.6 Flash',
+    'MODEL_PLACEHOLDER_M72': 'Gemini 3.6 Flash (Medium)',
+    'MODEL_PLACEHOLDER_M73': 'Gemini 3.6 Flash',
+    'MODEL_PLACEHOLDER_M196': 'Gemini 3.6 Flash',
+    'MODEL_PLACEHOLDER_M291': 'Gemini 3.6 Flash',
+    'MODEL_PLACEHOLDER_M292': 'Gemini 3.6 Flash',
+    # Gemini 3.5 Flash 系列
+    'MODEL_PLACEHOLDER_M18': 'Gemini 3.5 Flash',
+    'MODEL_PLACEHOLDER_M149': 'Gemini 3.5 Flash',
+    # Gemini 3 Flash (Alpha) 系列
+    'MODEL_PLACEHOLDER_M15': 'Gemini 3 Flash (Alpha)',
+    'MODEL_PLACEHOLDER_M20': 'Gemini 3 Flash (Alpha)',
+    'MODEL_PLACEHOLDER_M84': 'Gemini 3 Flash (Alpha)',
+    'MODEL_PLACEHOLDER_M132': 'Gemini 3 Flash (Alpha)',
+    'MODEL_PLACEHOLDER_M133': 'Gemini 3 Flash (Alpha)',
+    'MODEL_PLACEHOLDER_M186': 'Gemini 3 Flash (Alpha)',
+    'MODEL_PLACEHOLDER_M187': 'Gemini 3 Flash (Alpha)',
+    'MODEL_PLACEHOLDER_M262': 'Gemini 3 Flash (Alpha)',
+    'MODEL_PLACEHOLDER_M270': 'Gemini 3 Flash (Alpha)',
+    # Google 官方直接枚举
+    'MODEL_GOOGLE_GEMINI_2_5_PRO': 'Gemini 2.5 Pro',
+    'MODEL_GOOGLE_GEMINI_2_5_FLASH': 'Gemini 2.5 Flash',
+}
+
 def extract_gen_metadata(data: bytes) -> Optional[Dict[str, Any]]:
     if not data:
         return None
@@ -123,6 +172,9 @@ def extract_gen_metadata(data: bytes) -> Optional[Dict[str, Any]]:
         'trajectory_id': None,
         'model_id': 'unknown',
         'model_name': 'Unknown',
+        'model_enum': None,
+        'ui_model': None,
+        'is_downgraded': False,
         'input_tokens': 0,
         'cached_tokens': 0,
         'output_tokens': 0,
@@ -190,6 +242,8 @@ def extract_gen_metadata(data: bytes) -> Optional[Dict[str, Any]]:
                             v_str = k_v['str']
                     if k == 'last_step_index' and v_str and v_str.isdigit():
                         record['last_step_index'] = int(v_str)
+                    elif k == 'model_enum' and v_str:
+                        record['model_enum'] = v_str
 
     # 规范化 response_tokens
     if record['response_tokens'] == 0 and record['output_tokens'] > 0:
@@ -199,19 +253,34 @@ def extract_gen_metadata(data: bytes) -> Optional[Dict[str, Any]]:
     # 总 Token = 未缓存输入 + 缓存读取 + 输出
     record['total_tokens'] = record['input_tokens'] + record['cached_tokens'] + record['output_tokens']
 
-    # 统一模型名称展示
-    if record['model_name'] == 'Unknown' and record['model_id'] != 'unknown':
-        id_map = {
-            'gemini-default': 'Gemini 3.5 Flash (Medium)',
-            'gemini-3-flash-a': 'Gemini 3 Flash (Alpha)',
-            'gemini-3-flash-medium-a': 'Gemini 3 Flash Medium (Alpha)',
-            'gemini-3.6-flash': 'Gemini 3.6 Flash (Medium)',
-            'gemini-3.7-flash': 'Gemini 3.7 Flash (Medium)',
-            'gemini-3.8-flash': 'Gemini 3.8 Flash (Medium)',
-            'gemini-3p7-flash-exp-d': 'Gemini 3.7 Flash Exp (Thinking)',
-            'claude-opus-4-6-thinking': 'Claude Opus 4.6 (Thinking)',
-        }
-        record['model_name'] = id_map.get(record['model_id'], record['model_id'])
+    # 1. 映射 IDE 前端所选逻辑模型
+    if record.get('model_enum'):
+        record['ui_model'] = MODEL_ENUM_MAP.get(record['model_enum'], record['model_enum'])
+
+    # 2. 规范化物理执行模型名称
+    id_map = {
+        'gemini-default': 'Gemini 3.5 Flash (Medium)',
+        'gemini-3-flash-a': 'Gemini 3 Flash (Alpha)',
+        'gemini-3-flash-medium-a': 'Gemini 3 Flash Medium (Alpha)',
+        'gemini-3.6-flash': 'Gemini 3.6 Flash (Medium)',
+        'gemini-3.7-flash': 'Gemini 3.7 Flash (Medium)',
+        'gemini-3.8-flash': 'Gemini 3.8 Flash (Medium)',
+        'gemini-3.8-flash-control': 'Gemini 3.8 Flash (Control)',
+        'gemini-3.8-flash-tiered': 'Gemini 3.8 Flash (Tiered)',
+        'gemini-3.8-flash-n': 'Gemini 3.8 Flash (Node)',
+        'gemini-3p7-flash-exp-d': 'Gemini 3.7 Flash Exp (Thinking)',
+        'claude-opus-4-6-thinking': 'Claude Opus 4.6 (Thinking)',
+    }
+    exec_model = id_map.get(record['model_id'], record['model_id'])
+
+    # 3. 统一主要展示模型名称与降级/路由感知
+    if record.get('ui_model'):
+        record['model_name'] = record['ui_model']
+        # 核心判定：如果用户在 IDE 选择了 Pro，但服务端实际调度了 Flash 模型，标记降级
+        if 'pro' in record['ui_model'].lower() and 'flash' in (record.get('model_id') or '').lower():
+            record['is_downgraded'] = True
+    elif record['model_name'] == 'Unknown' and record['model_id'] != 'unknown':
+        record['model_name'] = exec_model
 
     return record
 

@@ -65,6 +65,9 @@
   - **Tab 3: 📅 每日走势 (Daily Trend)**：每日消耗折线/柱状图与每日消费/节省汇总明细表。
   - **Tab 4: 🔥 年度热力图 (GitHub Heatmap)**：GitHub 风格 52 周 365 天用量活跃矩阵，鼠标悬浮 Tooltip 呈现每日确切用量。
   - **Tab 5: 💰 官方价格表 (Pricing Sheet)**：全系模型输入/输出/缓存单价与典型场景对照。
+- **🪞「照妖镜」模型调度降级与物理路由精准感知**：
+  - **IDE 选择模型 vs 实际物理模型**：完整逆向 Google Antigravity 底层 Protobuf 元数据与 `language_server.exe` 内部模型映射表，同时抓取前端选择的逻辑模型（如 `Gemini 3.1 Pro (Low)`）与 Google 云端实际调度的物理节点（如 `gemini-3.8-flash-n`）。
+  - **降级透明预警**：当用户在 IDE 中选择了 Pro 模型但被 Google 服务端自动降级/路由至 Flash 模型处理时，仪表盘用量明细与模型明细表会自动高亮标注 `⚠️ 降级调度` 红色徽章并提供调度原因排查弹窗，杜绝“名义用 Pro，实则跑 Flash”的黑盒调度欺骗！
 - **📦 零第三方依赖**：100% 基于 Python 3.8+ 标准库实现，无需 `pip install` 任何第三方包，开箱即用。
 
 ---

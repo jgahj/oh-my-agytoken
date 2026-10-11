@@ -97,6 +97,7 @@ def generate_multi_dimensional_stats(records: List[Dict[str, Any]]) -> Dict[str,
             "model_name": "",
             "model_id": "",
             "calls": 0,
+            "downgraded_calls": 0,
             "input_tokens": 0,
             "cached_tokens": 0,
             "output_tokens": 0,
@@ -191,6 +192,7 @@ def generate_multi_dimensional_stats(records: List[Dict[str, Any]]) -> Dict[str,
         lambda: defaultdict(
             lambda: {
                 "calls": 0,
+                "downgraded_calls": 0,
                 "input_tokens": 0,
                 "cached_tokens": 0,
                 "output_tokens": 0,
@@ -330,6 +332,8 @@ def generate_multi_dimensional_stats(records: List[Dict[str, Any]]) -> Dict[str,
         m_dict["model_name"] = m_key
         m_dict["model_id"] = r.get("model_id", "")
         m_dict["calls"] += 1
+        if r.get("is_downgraded"):
+            m_dict["downgraded_calls"] += 1
         m_dict["input_tokens"] += inp
         m_dict["cached_tokens"] += cac
         m_dict["output_tokens"] += out
@@ -352,6 +356,8 @@ def generate_multi_dimensional_stats(records: List[Dict[str, Any]]) -> Dict[str,
         c_dict["env"] = env_val
         c_dict["client_type"] = client_val
         c_dict["calls"] += 1
+        if r.get("is_downgraded"):
+            c_dict["downgraded_calls"] = c_dict.get("downgraded_calls", 0) + 1
         c_dict["input_tokens"] += inp
         c_dict["cached_tokens"] += cac
         c_dict["output_tokens"] += out
@@ -388,6 +394,8 @@ def generate_multi_dimensional_stats(records: List[Dict[str, Any]]) -> Dict[str,
 
             dm_dict = daily_by_model[day_str][m_key]
             dm_dict["calls"] += 1
+            if r.get("is_downgraded"):
+                dm_dict["downgraded_calls"] += 1
             dm_dict["input_tokens"] += inp
             dm_dict["cached_tokens"] += cac
             dm_dict["output_tokens"] += out
@@ -531,6 +539,9 @@ def generate_multi_dimensional_stats(records: List[Dict[str, Any]]) -> Dict[str,
             "client": r.get("client_type", "Antigravity IDE"),
             "model": r.get("model_name", "Unknown"),
             "model_id": r.get("model_id", ""),
+            "ui_model": r.get("ui_model", ""),
+            "model_enum": r.get("model_enum", ""),
+            "is_downgraded": r.get("is_downgraded", False),
             "latency": f"{lat:.2f}s" if lat > 0 else "--",
             "latency_sec": lat,
             "input_tokens": inp,
@@ -593,6 +604,7 @@ def generate_multi_dimensional_stats(records: List[Dict[str, Any]]) -> Dict[str,
         "overview": {
             "total_calls": total_calls,
             "total_conversations": len(conv_stats),
+            "downgraded_calls": sum(1 for r in records if r.get("is_downgraded")),
             "min_time": datetime.fromtimestamp(min_time).strftime("%Y-%m-%d %H:%M:%S") if min_time else "N/A",
             "max_time": datetime.fromtimestamp(max_time).strftime("%Y-%m-%d %H:%M:%S") if max_time else "N/A",
             "total_input_uncached": total_input,
@@ -1080,6 +1092,9 @@ class TokenDashboardHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     "env": r.get("env", "Windows"),
                     "model": r.get("model_name", "Unknown"),
                     "model_id": r.get("model_id", ""),
+                    "ui_model": r.get("ui_model", ""),
+                    "model_enum": r.get("model_enum", ""),
+                    "is_downgraded": r.get("is_downgraded", False),
                     "latency": f"{lat:.2f}s" if lat > 0 else "--",
                     "latency_sec": lat,
                     "input_tokens": inp,
@@ -1368,6 +1383,9 @@ def export_all(
         "timestamp",
         "model_name",
         "model_id",
+        "ui_model",
+        "model_enum",
+        "is_downgraded",
         "input_tokens",
         "cached_tokens",
         "output_tokens",

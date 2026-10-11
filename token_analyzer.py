@@ -18,7 +18,7 @@ except Exception:
 
 from proto_decoder import extract_gen_metadata, extract_step_timestamp, parse_proto
 
-CACHE_VERSION = 3
+CACHE_VERSION = 5
 
 
 _WSL_DISTROS_CACHE: Optional[List[str]] = None
